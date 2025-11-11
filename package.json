@@ -1,0 +1,17 @@
+{
+  "name": "hisabweb-server",
+  "version": "1.0.0",
+  "description": "HisabWeb - Worker Salary Management Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "keywords": ["salary", "management", "workers", "advances"],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,8 +1,5 @@
-// Data Storage Keys
-const STORAGE_KEYS = {
-    WORKERS: 'hisabweb_workers',
-    ADVANCES: 'hisabweb_advances'
-};
+// API Base URL
+const API_BASE = 'http://localhost:3001/api';
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
@@ -78,33 +75,49 @@ function switchPage(pageName) {
     }
 }
 
-// Local Storage Functions
-function getWorkers() {
-    const workers = localStorage.getItem(STORAGE_KEYS.WORKERS);
-    return workers ? JSON.parse(workers) : [];
+// API Functions
+async function getWorkers() {
+    try {
+        const response = await fetch(`${API_BASE}/workers`);
+        if (!response.ok) throw new Error('Failed to fetch workers');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching workers:', error);
+        return [];
+    }
 }
 
-function saveWorkers(workers) {
-    localStorage.setItem(STORAGE_KEYS.WORKERS, JSON.stringify(workers));
+async function saveWorkers(workers) {
+    // This function is now handled by individual API calls
+    // Keeping for compatibility but not used directly
+    return true;
 }
 
-function getAdvances() {
-    const advances = localStorage.getItem(STORAGE_KEYS.ADVANCES);
-    return advances ? JSON.parse(advances) : [];
+async function getAdvances() {
+    try {
+        const response = await fetch(`${API_BASE}/advances`);
+        if (!response.ok) throw new Error('Failed to fetch advances');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching advances:', error);
+        return [];
+    }
 }
 
-function saveAdvances(advances) {
-    localStorage.setItem(STORAGE_KEYS.ADVANCES, JSON.stringify(advances));
+async function saveAdvances(advances) {
+    // This function is now handled by individual API calls
+    // Keeping for compatibility but not used directly
+    return true;
 }
 
 // Dashboard Functions
-function loadDashboard() {
-    updateDashboardStats();
+async function loadDashboard() {
+    await updateDashboardStats();
 }
 
-function updateDashboardStats() {
-    const workers = getWorkers();
-    const advances = getAdvances();
+async function updateDashboardStats() {
+    const workers = await getWorkers();
+    const advances = await getAdvances();
     
     // Get current month advances
     const currentDate = new Date();
@@ -130,9 +143,9 @@ function updateDashboardStats() {
 }
 
 // Worker Functions
-function loadWorkers() {
-    const workers = getWorkers();
-    const advances = getAdvances();
+async function loadWorkers() {
+    const workers = await getWorkers();
+    const advances = await getAdvances();
     const tableBody = document.getElementById('workers-table-body');
     const noWorkersDiv = document.getElementById('no-workers');
     
@@ -204,9 +217,9 @@ function loadWorkers() {
     }).join('');
 }
 
-function filterWorkers(searchTerm) {
-    const workers = getWorkers();
-    const advances = getAdvances();
+async function filterWorkers(searchTerm) {
+    const workers = await getWorkers();
+    const advances = await getAdvances();
     const tableBody = document.getElementById('workers-table-body');
     
     const filteredWorkers = workers.filter(worker => 
@@ -295,8 +308,8 @@ function closeWorkerModal() {
     document.getElementById('worker-modal').classList.remove('active');
 }
 
-function editWorker(workerId) {
-    const workers = getWorkers();
+async function editWorker(workerId) {
+    const workers = await getWorkers();
     const worker = workers.find(w => w.id === workerId);
     
     if (!worker) return;
@@ -311,79 +324,75 @@ function editWorker(workerId) {
     document.getElementById('worker-modal').classList.add('active');
 }
 
-function saveWorker(event) {
+async function saveWorker(event) {
     event.preventDefault();
-    
+
     const workerId = document.getElementById('worker-id').value;
     const name = document.getElementById('worker-name').value.trim();
     const designation = document.getElementById('worker-designation').value.trim();
     const salary = document.getElementById('worker-salary').value;
     const joiningDate = document.getElementById('worker-joining-date').value;
 
-    const workers = getWorkers();
+    try {
+        if (workerId) {
+            // Update existing worker
+            const response = await fetch(`${API_BASE}/workers/${workerId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, designation, salary, joiningDate })
+            });
 
-    if (workerId) {
-        // Update existing worker
-        const index = workers.findIndex(w => w.id === workerId);
-        if (index !== -1) {
-            workers[index] = {
-                ...workers[index],
-                name,
-                designation,
-                salary,
-                joiningDate
-            };
+            if (!response.ok) throw new Error('Failed to update worker');
+        } else {
+            // Add new worker
+            const response = await fetch(`${API_BASE}/workers`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, designation, salary, joiningDate })
+            });
+
+            if (!response.ok) throw new Error('Failed to add worker');
         }
-    } else {
-        // Add new worker
-        const newWorker = {
-            id: generateId(),
-            name,
-            designation,
-            salary,
-            joiningDate,
-            createdAt: new Date().toISOString()
-        };
-        workers.push(newWorker);
-    }
 
-    saveWorkers(workers);
-    closeWorkerModal();
-    loadWorkers();
-    updateDashboardStats();
-    populateWorkerSelect();
-    
-    showNotification(workerId ? 'Worker updated successfully!' : 'Worker added successfully!');
+        closeWorkerModal();
+        await loadWorkers();
+        await updateDashboardStats();
+        await populateWorkerSelect();
+
+        showNotification(workerId ? 'Worker updated successfully!' : 'Worker added successfully!');
+    } catch (error) {
+        console.error('Error saving worker:', error);
+        showNotification('Error saving worker. Please try again.');
+    }
 }
 
-function deleteWorker(workerId) {
+async function deleteWorker(workerId) {
     if (!confirm('Are you sure you want to delete this worker? This will also delete all their advance records.')) {
         return;
     }
 
-    let workers = getWorkers();
-    let advances = getAdvances();
+    try {
+        const response = await fetch(`${API_BASE}/workers/${workerId}`, {
+            method: 'DELETE'
+        });
 
-    // Remove worker
-    workers = workers.filter(w => w.id !== workerId);
-    
-    // Remove worker's advances
-    advances = advances.filter(adv => adv.workerId !== workerId);
+        if (!response.ok) throw new Error('Failed to delete worker');
 
-    saveWorkers(workers);
-    saveAdvances(advances);
-    
-    loadWorkers();
-    updateDashboardStats();
-    populateWorkerSelect();
-    
-    showNotification('Worker deleted successfully!');
+        await loadWorkers();
+        await updateDashboardStats();
+        await populateWorkerSelect();
+
+        showNotification('Worker deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting worker:', error);
+        showNotification('Error deleting worker. Please try again.');
+    }
 }
 
 // Advance Functions
-function loadAdvances() {
-    const advances = getAdvances();
-    const workers = getWorkers();
+async function loadAdvances() {
+    const advances = await getAdvances();
+    const workers = await getWorkers();
     const advancesList = document.getElementById('advances-list');
 
     if (advances.length === 0) {
@@ -450,64 +459,70 @@ function closeAdvanceModal() {
     document.getElementById('advance-modal').classList.remove('active');
 }
 
-function populateWorkerSelect() {
-    const workers = getWorkers();
+async function populateWorkerSelect() {
+    const workers = await getWorkers();
     const select = document.getElementById('advance-worker');
-    
-    select.innerHTML = '<option value="">Choose a worker...</option>' + 
+
+    select.innerHTML = '<option value="">Choose a worker...</option>' +
         workers.map(worker => `<option value="${worker.id}">${worker.name} - ${worker.designation}</option>`).join('');
 }
 
-function saveAdvance(event) {
+async function saveAdvance(event) {
     event.preventDefault();
-    
+
     const workerId = document.getElementById('advance-worker').value;
     const amount = document.getElementById('advance-amount').value;
     const date = document.getElementById('advance-date').value;
     const note = document.getElementById('advance-note').value.trim();
 
-    const advances = getAdvances();
+    try {
+        const response = await fetch(`${API_BASE}/advances`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ workerId, amount, date, note })
+        });
 
-    const newAdvance = {
-        id: generateId(),
-        workerId,
-        amount,
-        date,
-        note,
-        createdAt: new Date().toISOString()
-    };
+        if (!response.ok) throw new Error('Failed to save advance');
 
-    advances.push(newAdvance);
-    saveAdvances(advances);
-    
-    closeAdvanceModal();
-    loadAdvances();
-    loadWorkers();
-    updateDashboardStats();
-    
-    showNotification('Advance added successfully!');
+        closeAdvanceModal();
+        await loadAdvances();
+        await loadWorkers();
+        await updateDashboardStats();
+
+        showNotification('Advance added successfully!');
+    } catch (error) {
+        console.error('Error saving advance:', error);
+        showNotification('Error saving advance. Please try again.');
+    }
 }
 
-function deleteAdvance(advanceId) {
+async function deleteAdvance(advanceId) {
     if (!confirm('Are you sure you want to delete this advance record?')) {
         return;
     }
 
-    let advances = getAdvances();
-    advances = advances.filter(adv => adv.id !== advanceId);
-    
-    saveAdvances(advances);
-    loadAdvances();
-    loadWorkers();
-    updateDashboardStats();
-    
-    showNotification('Advance deleted successfully!');
+    try {
+        const response = await fetch(`${API_BASE}/advances/${advanceId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Failed to delete advance');
+
+        await loadAdvances();
+        await loadWorkers();
+        await updateDashboardStats();
+
+        showNotification('Advance deleted successfully!');
+    } catch (error) {
+        console.error('Error deleting advance:', error);
+        showNotification('Error deleting advance. Please try again.');
+    }
 }
 
 // PDF Generation Functions
-function generateSalarySlip(workerId) {
-    const workers = getWorkers();
-    const advances = getAdvances();
+async function generateSalarySlip(workerId) {
+    const workers = await getWorkers();
+    const advances = await getAdvances();
     const worker = workers.find(w => w.id === workerId);
 
     if (!worker) {
@@ -632,8 +647,8 @@ function generateSalarySlip(workerId) {
     showNotification('Salary slip generated successfully!');
 }
 
-function generateAllSlips() {
-    const workers = getWorkers();
+async function generateAllSlips() {
+    const workers = await getWorkers();
     
     if (workers.length === 0) {
         alert('No workers found! Please add workers first.');
@@ -652,37 +667,39 @@ function generateAllSlips() {
 }
 
 // Export/Import Functions
-function exportData() {
-    const data = {
-        workers: getWorkers(),
-        advances: getAdvances(),
-        exportDate: new Date().toISOString(),
-        version: '1.0'
-    };
+async function exportData() {
+    try {
+        const response = await fetch(`${API_BASE}/export`);
+        if (!response.ok) throw new Error('Failed to export data');
 
-    const dataStr = JSON.stringify(data, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `hisabweb_backup_${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    
-    URL.revokeObjectURL(url);
-    showNotification('Data exported successfully!');
+        const data = await response.json();
+        const dataStr = JSON.stringify(data, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `hisabweb_backup_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+
+        URL.revokeObjectURL(url);
+        showNotification('Data exported successfully!');
+    } catch (error) {
+        console.error('Error exporting data:', error);
+        showNotification('Error exporting data. Please try again.');
+    }
 }
 
-function importData(event) {
+async function importData(event) {
     const file = event.target.files[0];
-    
+
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
             const data = JSON.parse(e.target.result);
-            
+
             if (!data.workers || !data.advances) {
                 alert('Invalid backup file format!');
                 return;
@@ -692,16 +709,26 @@ function importData(event) {
                 return;
             }
 
-            saveWorkers(data.workers);
-            saveAdvances(data.advances);
-            
-            initializeApp();
-            showNotification('Data imported successfully!');
+            // Import via API
+            fetch(`${API_BASE}/import`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ workers: data.workers, advances: data.advances })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to import data');
+                initializeApp();
+                showNotification('Data imported successfully!');
+            })
+            .catch(error => {
+                console.error('Error importing data:', error);
+                showNotification('Error importing data. Please try again.');
+            });
         } catch (error) {
             alert('Error reading backup file: ' + error.message);
         }
     };
-    
+
     reader.readAsText(file);
     event.target.value = ''; // Reset file input
 }
