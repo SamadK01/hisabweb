@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HisabWeb - Worker Salary Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="8" fill="#4F46E5"/>
+                    <path d="M8 16h6M18 16h6M16 10v12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <h1>HisabWeb</h1>
+            </div>
+            <nav class="nav">
+                <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+                <button class="nav-btn" data-page="workers">Workers</button>
+                <button class="nav-btn" data-page="advances">Advances</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page active">
+                <div class="page-header">
+                    <h2>Dashboard</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="exportData()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                            </svg>
+                            Export Data
+                        </button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                            </svg>
+                            Import Data
+                        </button>
+                        <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #EEF2FF;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Total Workers</p>
+                            <h3 class="stat-value" id="total-workers">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #F0FDF4;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Total Salaries (Monthly)</p>
+                            <h3 class="stat-value" id="total-salaries">PKR 0</h3>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #FEF2F2;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                <line x1="1" y1="10" x2="23" y2="10"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Advances This Month</p>
+                            <h3 class="stat-value" id="total-advances">PKR 0</h3>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #FFF7ED;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Net Payable</p>
+                            <h3 class="stat-value" id="net-payable">PKR 0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <h3>Quick Actions</h3>
+                    <div class="action-buttons">
+                        <button class="action-card" onclick="showAddWorkerModal()">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="8.5" cy="7" r="4"/>
+                                <line x1="20" y1="8" x2="20" y2="14"/>
+                                <line x1="23" y1="11" x2="17" y2="11"/>
+                            </svg>
+                            <span>Add Worker</span>
+                        </button>
+                        <button class="action-card" onclick="switchPage('workers')">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            <span>View All Workers</span>
+                        </button>
+                        <button class="action-card" onclick="generateAllSlips()">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                            <span>Generate Salary Slips</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workers Page -->
+            <div id="workers-page" class="page">
+                <div class="page-header">
+                    <h2>All Workers</h2>
+                    <div class="header-actions">
+                        <input type="text" id="search-worker" class="search-input" placeholder="Search by name or designation...">
+                        <button class="btn btn-primary" onclick="showAddWorkerModal()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Add Worker
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="workers-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Designation</th>
+                                <th>Monthly Salary</th>
+                                <th>Advances</th>
+                                <th>Remaining Salary</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="workers-table-body">
+                            <!-- Workers will be populated here -->
+                        </tbody>
+                    </table>
+                    <div id="no-workers" class="empty-state">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        <p>No workers added yet</p>
+                        <button class="btn btn-primary" onclick="showAddWorkerModal()">Add Your First Worker</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advances Page -->
+            <div id="advances-page" class="page">
+                <div class="page-header">
+                    <h2>Advance Management</h2>
+                    <button class="btn btn-primary" onclick="showAddAdvanceModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Add Advance
+                    </button>
+                </div>
+
+                <div class="advances-list" id="advances-list">
+                    <!-- Advances will be populated here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit Worker Modal -->
+    <div id="worker-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="worker-modal-title">Add New Worker</h3>
+                <button class="close-btn" onclick="closeWorkerModal()">&times;</button>
+            </div>
+            <form id="worker-form" onsubmit="saveWorker(event)">
+                <input type="hidden" id="worker-id">
+                <div class="form-group">
+                    <label for="worker-name">Worker Name *</label>
+                    <input type="text" id="worker-name" required placeholder="Enter worker name">
+                </div>
+                <div class="form-group">
+                    <label for="worker-designation">Designation *</label>
+                    <input type="text" id="worker-designation" required placeholder="e.g., Manager, Helper, Driver">
+                </div>
+                <div class="form-group">
+                    <label for="worker-salary">Monthly Salary (PKR) *</label>
+                    <input type="number" id="worker-salary" required min="0" placeholder="Enter monthly salary">
+                </div>
+                <div class="form-group">
+                    <label for="worker-joining-date">Joining Date *</label>
+                    <input type="date" id="worker-joining-date" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeWorkerModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Worker</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Advance Modal -->
+    <div id="advance-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Advance</h3>
+                <button class="close-btn" onclick="closeAdvanceModal()">&times;</button>
+            </div>
+            <form id="advance-form" onsubmit="saveAdvance(event)">
+                <div class="form-group">
+                    <label for="advance-worker">Select Worker *</label>
+                    <select id="advance-worker" required>
+                        <option value="">Choose a worker...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="advance-amount">Advance Amount (PKR) *</label>
+                    <input type="number" id="advance-amount" required min="1" placeholder="Enter advance amount">
+                </div>
+                <div class="form-group">
+                    <label for="advance-date">Date *</label>
+                    <input type="date" id="advance-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="advance-note">Note (Optional)</label>
+                    <textarea id="advance-note" rows="3" placeholder="Add a note..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAdvanceModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Advance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
